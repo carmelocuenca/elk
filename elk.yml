@@ -1,0 +1,34 @@
+elasticsearch:
+  image: elasticsearch
+  environment:
+    LOGSPOUT: ignore
+
+kibana:
+  image: kibana
+  links:
+    - elasticsearch
+  environment:
+    LOGSPOUT: ignore
+    ELASTICSEARCH_URL: http://elasticsearch:9200
+  ports:
+    - 5601:5601
+
+logstash:
+  image: logstash
+  links:
+    - elasticsearch
+  volumes:
+    - ./logstash.conf:/config-dir/logstash.conf
+  command:
+    logstash -f /config-dir/logstash.conf
+
+logsppout:
+  image: amouat/logspout-logstash
+  volumes:
+    - /var/run/docker.sock:/tmp/docker.sock
+  ports:
+    - 8000:80 # Warning not in production
+  links:
+    - logstash
+  command:
+    logstash://logstash:5000
